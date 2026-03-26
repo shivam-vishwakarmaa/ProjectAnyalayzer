@@ -5,9 +5,9 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from backend.services.ast_parser import get_language_for_file, parse_code_chunks
-from backend.services.vector_store import add_code_chunks, search_code_chunks
-from backend.services.llm import stream_llm_response
+from services.ast_parser import get_language_for_file, parse_code_chunks
+from services.vector_store import add_code_chunks, search_code_chunks
+from services.llm import stream_llm_response
 
 router = APIRouter()
 
