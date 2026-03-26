@@ -11,6 +11,7 @@ export default function Home() {
   const [activeFile, setActiveFile] = useState<{name: string, content: string}>({ name: 'README.md', content: '# Project Analyzer\nWelcome to the Mission Control AI analyzer.' });
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+  const [treeData, setTreeData] = useState<any[]>([]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -24,6 +25,9 @@ export default function Home() {
     try {
       const res = await axios.post('http://localhost:8000/api/upload-project', formData);
       setUploadStatus(`Success! Ingested ${res.data.file_count} chunks.`);
+      if (res.data.tree_data) {
+        setTreeData(res.data.tree_data);
+      }
     } catch (error) {
       console.error(error);
       setUploadStatus("Failed to upload project. Is FastAPI running?");
@@ -49,6 +53,7 @@ export default function Home() {
           </label>
         </div>
         <FileTree 
+          treeData={treeData.length > 0 ? treeData : undefined}
           onSelectFile={(content, name) => setActiveFile({ content, name })}
         />
       </div>

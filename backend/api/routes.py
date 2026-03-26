@@ -18,43 +18,57 @@ if not os.path.exists(UPLOAD_DIR):
 IGNORED_DIRS = {".git", "node_modules", "venv", "__pycache__", ".next", "dist", "build"}
 IGNORED_FILES = {".env", "package-lock.json", "yarn.lock"}
 
-def process_directory(extract_path: str):
+def process_directory(extract_path: str, root_name: str):
     chunks = []
-    for root, dirs, files in os.walk(extract_path):
-        # Exclude ignored directories
-        dirs[:] = [d for d in dirs if d not in IGNORED_DIRS]
-        
-        for file in files:
-            if file in IGNORED_FILES:
-                continue
-                
-            file_path = os.path.join(root, file)
-            lang = get_language_for_file(file)
-            if not lang:
-                continue # Skip unknown files
+    
+    def build_node(current_path, name):
+        node = {"name": name, "type": "folder", "children": []}
+        try:
+            entries = os.listdir(current_path)
+        except Exception:
+            return node
             
-            try:
-                with open(file_path, "r", encoding="utf-8") as f:
-                    content = f.read()
-                
-                # We need relative path for display
-                rel_path = os.path.relpath(file_path, extract_path)
-                file_chunks = parse_code_chunks(content, lang, rel_path)
-                chunks.extend(file_chunks)
-            except Exception as e:
-                print(f"Error reading file {file_path}: {e}")
-                
-    return chunks
+        for entry in entries:
+            if entry in IGNORED_DIRS or entry in IGNORED_FILES:
+                continue
+            
+            full_path = os.path.join(current_path, entry)
+            if os.path.isdir(full_path):
+                child_node = build_node(full_path, entry)
+                node["children"].append(child_node)
+            else:
+                lang = get_language_for_file(entry)
+                content = ""
+                try:
+                    # Attempt to read all files as text for display in the IDE
+                    with open(full_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                        
+                    if lang:
+                        rel_path = os.path.relpath(full_path, extract_path)
+                        file_chunks = parse_code_chunks(content, lang, rel_path)
+                        chunks.extend(file_chunks)
+                except Exception as e:
+                    # Ignore binary files or unreadable text files
+                    pass
+                        
+                node["children"].append({
+                    "name": entry,
+                    "type": "file",
+                    "content": content
+                })
+        
+        node["children"].sort(key=lambda x: (x["type"] == "file", x["name"]))
+        return node
+        
+    tree = build_node(extract_path, root_name)
+    return chunks, [tree]
 
 @router.post("/upload-project")
 async def upload_project(file: UploadFile = File(...)):
     if not file.filename.endswith('.zip'):
-        # For simplicity, if they upload a file, we treat it as zip in this MVP.
-        # But wait, FastAPI direct folder upload isn't native via single File(...).
-        # We expect a zip upload from frontend.
         pass
     
-    # Save the uploaded file
     zip_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(zip_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -62,20 +76,20 @@ async def upload_project(file: UploadFile = File(...)):
     extract_path = os.path.join(UPLOAD_DIR, file.filename.replace('.zip', ''))
     
     try:
-        # Extract zip
         if file.filename.endswith('.zip'):
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 zip_ref.extractall(extract_path)
-            os.remove(zip_path) # cleanup
+            os.remove(zip_path)
         
         # Parse and embed
-        chunks = process_directory(extract_path)
+        chunks, tree_data = process_directory(extract_path, file.filename.replace('.zip', ''))
         add_code_chunks(chunks)
         
         return {
             "status": "success", 
             "message": f"Successfully ingested {len(chunks)} chunks.",
-            "file_count": len(chunks)
+            "file_count": len(chunks),
+            "tree_data": tree_data
         }
         
     except Exception as e:

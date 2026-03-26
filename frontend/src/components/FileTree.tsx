@@ -11,14 +11,12 @@ interface FileNode {
 }
 
 // Mock initial data before a project is uploaded
-const initialData: FileNode[] = [
+const defaultInitialData: FileNode[] = [
   {
-    name: "src", type: "folder", children: [
-      { name: "main.py", type: "file", content: "print('Hello World')" },
-      { name: "utils.py", type: "file", content: "def add(a, b): return a + b" }
+    name: "Welcome", type: "folder", children: [
+      { name: "Instructions.md", type: "file", content: "Upload a zip file to see your project here." }
     ]
-  },
-  { name: "README.md", type: "file", content: "# Project Analyzer" }
+  }
 ];
 
 const TreeNode = ({ node, level, onSelect }: { node: FileNode, level: number, onSelect: (node: FileNode) => void }) => {
@@ -65,8 +63,7 @@ const TreeNode = ({ node, level, onSelect }: { node: FileNode, level: number, on
   );
 };
 
-export default function FileTree({ onSelectFile }: { onSelectFile: (content: string, filename: string) => void }) {
-  const [treeData, setTreeData] = useState<FileNode[]>(initialData);
+export default function FileTree({ treeData = defaultInitialData, onSelectFile }: { treeData?: FileNode[], onSelectFile: (content: string, filename: string) => void }) {
 
   const handleSelect = (node: FileNode) => {
     if (node.type === 'file') {

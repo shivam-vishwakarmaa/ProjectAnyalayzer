@@ -42,8 +42,8 @@ export default function AIChat() {
     try {
       const response = await fetch('http://localhost:8000/api/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ query: userMessage })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: userMessage })
       });
 
       if (!response.body) throw new Error("No response body");
