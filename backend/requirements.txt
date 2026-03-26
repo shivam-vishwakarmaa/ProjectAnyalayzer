@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+chromadb
+tree-sitter
+tree-sitter-languages
+langchain
+langchain-community
+python-multipart
