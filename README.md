@@ -45,6 +45,17 @@ No, the platform does **not** blindly index the *entire* repository. It takes a 
 ### Prerequisites
 *   Node.js (v18+)
 *   Python (3.9+)
+*   **Ollama** (for local LLM inference)
+
+### 🧠 Model Setup
+The project uses **Ollama** to run models locally. Before starting the backend, ensure Ollama is installed and the required model is pulled:
+
+1.  **Install Ollama:** Download it from [ollama.com](https://ollama.com/).
+2.  **Pull the Model:** Open your terminal and run:
+    ```bash
+    ollama pull qwen2.5-coder
+    ```
+    *Note: You can change the model in `backend/services/llm.py` if you prefer a different one.*
 
 ### Backend Setup
 1. Launch the backend environments:
